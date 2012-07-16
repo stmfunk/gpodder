@@ -644,12 +644,6 @@ class PodcastEpisode(PodcastModelObject):
         return os.path.join(util.sanitize_encoding(self.channel.save_dir),
                 util.sanitize_encoding(self.download_filename))
 
-    def set_mimetype(self, mimetype, commit=False):
-        """Sets the mimetype for this episode"""
-        self.mime_type = mimetype
-        if commit:
-            self.db.commit()
-
     def extension(self, may_call_local_filename=True):
         filename, ext = util.filename_from_url(self.url)
         if may_call_local_filename:

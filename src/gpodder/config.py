@@ -251,7 +251,6 @@ class Config(object):
     def __init__(self, filename='gpodder.json'):
         self.__json_config = jsonconfig.JsonConfig(default=defaults,
                 on_key_changed=self._on_key_changed)
-        self.__save_thread = None
         self.__filename = filename
         self.__observers = []
 
@@ -301,17 +300,12 @@ class Config(object):
     def all_keys(self):
         return self.__json_config._keys_iter()
 
+    @util.delayed_call(seconds=WRITE_TO_DISK_TIMEOUT, daemon=True)
     def schedule_save(self):
-        if self.__save_thread is None:
-            self.__save_thread = util.run_in_background(self.save_thread_proc, True)
-
-    def save_thread_proc(self):
-        time.sleep(self.WRITE_TO_DISK_TIMEOUT)
-        if self.__save_thread is not None:
-            self.save()
+        self.save()
 
     def __atexit(self):
-        if self.__save_thread is not None:
+        if util.delayed_call_pending(self.schedule_save):
             self.save()
 
     def save(self, filename=None):
@@ -329,8 +323,6 @@ class Config(object):
             logger.error('Cannot write settings to %s', filename)
             util.delete_file(filename+'.tmp')
             raise
-
-        self.__save_thread = None
 
     def load(self, filename=None):
         if filename is not None:

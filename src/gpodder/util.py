@@ -61,6 +61,7 @@ import httplib
 import webbrowser
 import mimetypes
 import itertools
+import functools
 
 import feedparser
 
@@ -1595,7 +1596,6 @@ def rename_episode_file(episode, filename):
     episode.file_size = os.path.getsize(filename)
     episode.mime_type = mimetype_from_extension(extension)
     episode.save()
-    episode.db.commit()
 
 
 def get_update_info(url='http://gpodder.org/downloads'):
@@ -1632,4 +1632,68 @@ def run_in_background(function, daemon=False):
     thread.setDaemon(daemon)
     thread.start()
     return thread
+
+def _delayed_call_attribute(func):
+    return '_'+ func.__name__ +'_delayed_call_thread'
+
+def delayed_call(seconds, daemon=False, verbose=True):
+    """Delay (rate-limit) calls for a given amount of seconds
+
+    This decorator can be used to rate-limit calls to certain
+    functions that persist data to disk (e.g. config save or
+    database commit). After the first function call, a timer
+    will be started, and all calls that happen until the timer
+    is over will be ignored. After the timer ends, the function
+    will be called, and the action will be carried out.
+
+    If the optional argument daemon is True, the delayed call
+    might not be called at all when the application is exited
+    before the timer finishes.
+
+    If the optional argument verbose is True, print debug info
+    using the logger.
+
+    The function call will take place in another thread, so
+    make sure to only decorate thread-safe functions here.
+    """
+    def decorator(func):
+        # Kind of hack-ish: We store a reference to the thread
+        # in the instance, identified by the function name. We
+        # only need to determine this attribute name once.
+        thread_attr = _delayed_call_attribute(func)
+
+        @functools.wraps(func)
+        def wrapper(self, *args, **kwargs):
+            if getattr(self, thread_attr, None) is None:
+                if verbose:
+                    logger.info('Queueing call to %s', func.__name__)
+
+                def thread_proc():
+                    time.sleep(seconds)
+                    if getattr(self, thread_attr, None) is not None:
+                        setattr(self, thread_attr, None)
+                        if verbose:
+                            logger.info('Now running: %s', func.__name__)
+                        func(self, *args, **kwargs)
+
+                thread = run_in_background(thread_proc, daemon=daemon)
+                setattr(self, thread_attr, thread)
+            elif verbose:
+                logger.info('Ignoring call to %s', func.__name__)
+
+        return wrapper
+
+    return decorator
+
+
+def delayed_call_pending(func):
+    """Check if a delayed call is pending on a given method
+
+    Only works in conjunction with the @delayed_call decorator
+    """
+    thread_attr = _delayed_call_attribute(func)
+    print func.im_self
+    print thread_attr
+    print getattr(func.im_self, thread_attr)
+    return (getattr(func.im_self, thread_attr, None) is not None)
 

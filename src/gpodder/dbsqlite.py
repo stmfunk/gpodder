@@ -46,13 +46,15 @@ class Database(object):
     TABLE_PODCAST = 'podcast'
     TABLE_EPISODE = 'episode'
 
+    COMMIT_DELAY = 5
+
     def __init__(self, filename):
         self.database_file = filename
         self._db = None
         self.lock = threading.RLock()
 
     def close(self):
-        self.commit()
+        self.db.commit()
 
         with self.lock:
             cur = self.cursor()
@@ -99,10 +101,11 @@ class Database(object):
     def cursor(self):
         return self.db.cursor()
 
+    @util.delayed_call(seconds=COMMIT_DELAY, daemon=True)
     def commit(self):
         with self.lock:
             try:
-                logger.debug('Commit.')
+                logger.debug('Delayed commit running now.')
                 self.db.commit()
             except Exception, e:
                 logger.error('Cannot commit: %s', e, exc_info=True)
@@ -191,7 +194,7 @@ class Database(object):
             cur.execute("DELETE FROM %s WHERE podcast_id = ?" % self.TABLE_EPISODE, (podcast.id, ))
 
             cur.close()
-            self.db.commit()
+            self.commit()
 
     def save_podcast(self, podcast):
         self._save_object(podcast, self.TABLE_PODCAST, schema.PodcastColumns)

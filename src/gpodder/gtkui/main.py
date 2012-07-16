@@ -391,7 +391,6 @@ class gPodder(BuilderWidget, dbus.service.Object):
             episode.current_position_updated = now
             episode.mark(is_played=True)
             episode.save()
-            self.db.commit()
             self.update_episode_list_icons([episode.url])
             self.update_podcast_list_model([episode.channel.url])
 
@@ -1831,7 +1830,6 @@ class gPodder(BuilderWidget, dbus.service.Object):
     def episode_list_status_changed(self, episodes):
         self.update_episode_list_icons(set(e.url for e in episodes))
         self.update_podcast_list_model(set(e.channel.url for e in episodes))
-        self.db.commit()
 
     def clean_up_downloads(self, delete_partial=False):
         # Clean up temporary files left behind by old gPodder versions
@@ -1942,9 +1940,6 @@ class gPodder(BuilderWidget, dbus.service.Object):
             for command in util.format_desktop_command(group, groups[group], resume_position):
                 logger.debug('Executing: %s', repr(command))
                 subprocess.Popen(command)
-
-        # Persist episode status changes to the database
-        self.db.commit()
 
         # Flush updated episode status
         self.mygpo_client.flush()
@@ -2360,7 +2355,6 @@ class gPodder(BuilderWidget, dbus.service.Object):
         self.mygpo_client.process_episode_actions(self.find_episode)
 
         indicator.on_finished()
-        self.db.commit()
 
     def _update_cover(self, channel):
         if channel is not None:
@@ -2610,9 +2604,6 @@ class gPodder(BuilderWidget, dbus.service.Object):
         def finish_deletion(episode_urls, channel_urls):
             progress.on_finished()
 
-            # Episodes have been deleted - persist the database
-            self.db.commit()
-
             self.update_episode_list_icons(episode_urls)
             self.update_podcast_list_model(channel_urls)
             self.play_or_download()
@@ -2695,7 +2686,6 @@ class gPodder(BuilderWidget, dbus.service.Object):
         # the episode list could remove the selection if a filter is active.
         self.update_podcast_list_model(selected=True)
         self.update_episode_list_icons(selected=True)
-        self.db.commit()
 
     def mark_selected_episodes_new(self):
         for episode in self.get_selected_episodes():
@@ -2884,10 +2874,6 @@ class gPodder(BuilderWidget, dbus.service.Object):
     def get_new_episodes(self, channels=None):
         return [e for c in channels or self.channels for e in
                 filter(lambda e: e.check_is_new(), c.get_all_episodes())]
-
-    def commit_changes_to_database(self):
-        """This will be called after the sync process is finished"""
-        self.db.commit()
 
     def on_itemShowAllEpisodes_activate(self, widget):
         self.config.podcast_list_view_all = widget.get_active()
@@ -3471,7 +3457,6 @@ class gPodder(BuilderWidget, dbus.service.Object):
                 fn = episode.local_filename(create=False, check_only=True)
                 if fn == filename:
                     episode.mark(is_played=True)
-                    self.db.commit()
                     self.update_episode_list_icons([episode.url])
                     self.update_podcast_list_model([episode.channel.url])
                     return True
@@ -3497,8 +3482,7 @@ class gPodder(BuilderWidget, dbus.service.Object):
                 gPodderEpisodeSelector,
                 self.download_status_model,
                 self.download_queue_manager,
-                self.enable_download_list_update,
-                self.commit_changes_to_database)
+                self.enable_download_list_update)
 
         self.sync_ui.on_synchronize_episodes(self.channels, episodes, force_played)
 

@@ -41,8 +41,7 @@ class gPodderSyncUI(object):
             episode_selector_class,
             download_status_model,
             download_queue_manager,
-            enable_download_list_update,
-            commit_changes_to_database):
+            enable_download_list_update):
         self.device = None
 
         self._config = config
@@ -57,7 +56,6 @@ class gPodderSyncUI(object):
         self.download_status_model = download_status_model
         self.download_queue_manager = download_queue_manager
         self.enable_download_list_update = enable_download_list_update
-        self.commit_changes_to_database = commit_changes_to_database
 
 
     def _filter_sync_episodes(self, channels, only_downloaded=False):
