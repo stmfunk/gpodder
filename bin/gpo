@@ -50,8 +50,8 @@
     download [URL]             Download new episodes (all or only from URL)
     pending [URL]              List new episodes (all or only from URL)
     episodes [URL]             List episodes (all or only from URL)
-    watch EPISODE [URL|TITLE]  Search for an episode or enter episode
-                               number to download and watch it in the 
+    play EPISODE [URL|TITLE]   Search for an episode or enter episode
+                               number to download and play it in the 
                                default media player.
 
   - Configuration -
@@ -326,6 +326,9 @@ class gPodderCli(object):
 
     def subscribe(self, url, title=None):
         existing = self.get_podcast(url, check_only=True)
+        if title and self._check_for_title(title):
+          safe_print(inred("Title is already in use choose again."))
+          return
         if existing is not None:
             self._error(_('Already subscribed to %s.') % existing.url)
             return True
@@ -336,6 +339,12 @@ class gPodderCli(object):
                 self._error(_('Cannot subscribe to %s.') % url)
                 return True
                 
+            if not title and self._check_for_title(podcast.title()):
+              title = raw_input("Unique Title Required: ")
+              while self._check_for_title(title):
+                title = raw_input("Unique Title Required: ")
+              return
+
             if title is not None:
                 podcast.rename(title)
             podcast.save()
@@ -377,10 +386,20 @@ class gPodderCli(object):
         self._config.update_field(key, value)
         self.set(key)
 
+    def _check_for_title(self, title):
+      '''A simple check for the existance
+       of a title.'''
+      for podcast in self._model.get_podcasts():
+        if podcast.title == title:
+          return True
+      return False
+
     @FirstArgumentIsPodcastURL
     def rename(self, url, title):
         podcast = self.get_podcast(url)
-
+        if self._check_for_title(title):
+          safe_print(inred("Title is already in use choose again."))
+          return
         if podcast is not None:
             old_title = podcast.title
             podcast.rename(title)
@@ -560,7 +579,7 @@ class gPodderCli(object):
         safe_print(count, 'episodes downloaded.')
         return True
 
-    def watch(self,  episodeReferer, url_or_title=None):
+    def play(self,  episodeReferer, url_or_title=None):
       ''' Function designed to search for an episode
        of a podcast (url or title), download and play
        it using the default player for the system.'''
@@ -753,7 +772,20 @@ class gPodderCli(object):
             readline.parse_and_bind('tab: complete')
             readline.set_completer(self._tab_completion)
             readline.set_completer_delims(' ')
-
+        titles = []
+        for podcast in self._model.get_podcasts():
+          if podcast.title in titles:
+             new_title = raw_input("Error: Podcasts must have unique titles...\n\nHit enter for automatic renaming otherwise enter a new name for %s: " % podcast.url)
+             if new_title == "":
+               new_title = podcast.title+'x'
+               while new_title in titles:
+                 new_title = new_title+'x'
+             if new_title not in titles: 
+               self.rename(podcast.url, new_title)
+             else:
+               while new_titles in titles:
+                 title = raw_input("Unique Title Required: ")
+          titles.append(podcast.title)
         while True:
             try:
                 line = raw_input('gpo> ')
