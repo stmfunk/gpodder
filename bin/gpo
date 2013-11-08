@@ -567,7 +567,7 @@ class gPodderCli(object):
       episodeFound = False
       episodeObject = ""
       for podcast in self._model.get_podcasts():
-        if podcast.url == url_or_title or podcast.title == url_or_title or url_or_title=None:
+        if podcast.url == url_or_title or podcast.title == url_or_title or url_or_title==None:
           episodes = podcast.get_all_episodes()
           try:
             episodeReferer = int(episodeReferer)-1
