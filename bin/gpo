@@ -50,6 +50,9 @@
     download [URL]             Download new episodes (all or only from URL)
     pending [URL]              List new episodes (all or only from URL)
     episodes [URL]             List episodes (all or only from URL)
+    watch EPISODE [URL|TITLE]  Search for an episode or enter episode
+                               number to download and watch it in the 
+                               default media player.
 
   - Configuration -
 
@@ -69,6 +72,8 @@ from __future__ import print_function
 
 import sys
 import collections
+import commands
+import platform
 import os
 import re
 import inspect
@@ -488,6 +493,10 @@ class gPodderCli(object):
         return N_('%(count)d new episode', '%(count)d new episodes',
                 count) % {'count': count}
 
+
+ #   def _episode_search(url_or_title=None, episode):
+      
+
     @FirstArgumentIsPodcastURL
     def update(self, url=None):
         count = 0
@@ -551,14 +560,14 @@ class gPodderCli(object):
         safe_print(count, 'episodes downloaded.')
         return True
 
-    def watch(self, url_or_title, episodeReferer):
+    def watch(self,  episodeReferer, url_or_title=None):
       ''' Function designed to search for an episode
        of a podcast (url or title), download and play
        it using the default player for the system.'''
       episodeFound = False
       episodeObject = ""
       for podcast in self._model.get_podcasts():
-        if podcast.url == url_or_title or podcast.title == url_or_title:
+        if podcast.url == url_or_title or podcast.title == url_or_title or url_or_title=None:
           episodes = podcast.get_all_episodes()
           try:
             episodeReferer = int(episodeReferer)-1
@@ -571,14 +580,18 @@ class gPodderCli(object):
                 episodeObject = episode
                 break
           if episodeFound: 
-              safe_print(episodeObject.title)
+              safe_print(inblue(episodeObject.title))
 
       if episodeObject == "":
-        safe_print("No matching episodes.")
+        safe_print(inred("No matching episodes."))
         return
-      print(dir(episodeObject))
-      if episodeObject.was_downloaded():
-        print("Yup")
+      if not episodeObject.file_exists():
+        self._download_episode(episodeObject)
+      system = platform.system()
+      episodeFile = episodeObject.local_filename(False)
+      if system == 'Linux': commands.getstatusoutput('xdg-open "'+episodeFile+'"')
+      elif system == 'Darwin': commands.getstatusoutput('open "'+episodeFile+'"')
+      elif system == 'Windows': commands.getstatusoutput('start "" "'+episodeFile+'"')
 
     @FirstArgumentIsPodcastURL
     def disable(self, url):
