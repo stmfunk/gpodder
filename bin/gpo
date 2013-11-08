@@ -47,9 +47,9 @@
 
   - Episode management -
 
-    download [URL]             Download new episodes (all or only from URL)
-    pending [URL]              List new episodes (all or only from URL)
-    episodes [URL]             List episodes (all or only from URL)
+    download [URL|TITLE]             Download new episodes (all or only from URL)
+    pending [URL|TITLE]              List new episodes (all or only from URL)
+    episodes [URL|TITLE]             List episodes (all or only from URL)
     play EPISODE [URL|TITLE]   Search for an episode or enter episode
                                number to download and play it in the 
                                default media player.
@@ -473,11 +473,11 @@ class gPodderCli(object):
         return True
 
     @FirstArgumentIsPodcastURL
-    def episodes(self, url=None):
+    def episodes(self, url_or_title=None):
         output = []
         for podcast in self._model.get_podcasts():
             podcast_printed = False
-            if url is None or podcast.url == url:
+            if url_or_title is None or podcast.url == url_or_title or podcast.title == url_or_title:
                 episodes = self._episodesList(podcast)
                 episodes = u'\n      '.join(episodes)
                 output.append(u"""
@@ -536,11 +536,11 @@ class gPodderCli(object):
         return True
 
     @FirstArgumentIsPodcastURL
-    def pending(self, url=None):
+    def pending(self, url_or_title=None):
         count = 0
         for podcast in self._model.get_podcasts():
             podcast_printed = False
-            if url is None or podcast.url == url:
+            if url_or_title is None or podcast.url == url_or_title or podcast.title == url_or_title:
                 for episode in podcast.get_all_episodes():
                     if self.is_episode_new(episode):
                         if not podcast_printed:
@@ -563,11 +563,11 @@ class gPodderCli(object):
         self._finish_action()
 
     @FirstArgumentIsPodcastURL
-    def download(self, url=None):
+    def download(self, url_or_title=None):
         count = 0
         for podcast in self._model.get_podcasts():
             podcast_printed = False
-            if url is None or podcast.url == url:
+            if url_or_title is None or podcast.url == url_or_title or podcast.title == url_or_title:
                 for episode in podcast.get_all_episodes():
                     if self.is_episode_new(episode):
                         if not podcast_printed:
