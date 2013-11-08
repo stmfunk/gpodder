@@ -551,10 +551,34 @@ class gPodderCli(object):
         safe_print(count, 'episodes downloaded.')
         return True
 
-    def watch(self, url=None):
+    def watch(self, url_or_title, episodeReferer):
+      ''' Function designed to search for an episode
+       of a podcast (url or title), download and play
+       it using the default player for the system.'''
+      episodeFound = False
+      episodeObject = ""
       for podcast in self._model.get_podcasts():
-        print(podcast.title)
+        if podcast.url == url_or_title or podcast.title == url_or_title:
+          episodes = podcast.get_all_episodes()
+          try:
+            episodeReferer = int(episodeReferer)-1
+            episodeObject = episodes[episodeReferer]
+            episodeFound = True
+          except ValueError:
+            for episode in episodes:
+              if episodeReferer.lower() in episode.title.lower() or episodeReferer == episode.url:
+                episodeFound = True
+                episodeObject = episode
+                break
+          if episodeFound: 
+              safe_print(episodeObject.title)
 
+      if episodeObject == "":
+        safe_print("No matching episodes.")
+        return
+      print(dir(episodeObject))
+      if episodeObject.was_downloaded():
+        print("Yup")
 
     @FirstArgumentIsPodcastURL
     def disable(self, url):
