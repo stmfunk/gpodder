@@ -53,7 +53,7 @@ from optparse import OptionParser
 def main():
     # Paths to important files
     gpodder_script = sys.argv[0]
-    while os.path.islink(gpodder_script):
+    while os.path.islink(gpodder_script): # Code to find the actual path of a symbolic link
         gpodder_script = os.readlink(gpodder_script)
     gpodder_dir = os.path.join(os.path.dirname(gpodder_script), '..')
     prefix = os.path.abspath(os.path.normpath(gpodder_dir))
@@ -166,7 +166,9 @@ def main():
     elif gpodder.ui.gtk:
         from gpodder.gtkui import main
         gpodder.ui_folders.insert(0, os.path.join(ui_folder, 'gtk'))
+        print "1"
         main.main(options)
+        print "2"
     else:
         logger.error('No GUI selected.')
 

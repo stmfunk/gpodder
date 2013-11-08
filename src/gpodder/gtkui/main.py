@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#-*- coding: utf-8 -*-
 #
 # gPodder - A media aggregator and podcast client
 # Copyright (c) 2005-2013 Thomas Perl and the gPodder Team

@@ -551,6 +551,11 @@ class gPodderCli(object):
         safe_print(count, 'episodes downloaded.')
         return True
 
+    def watch(self, url=None):
+      for podcast in self._model.get_podcasts():
+        print(podcast.title)
+
+
     @FirstArgumentIsPodcastURL
     def disable(self, url):
         podcast = self.get_podcast(url)
@@ -677,6 +682,7 @@ class gPodderCli(object):
                     'new_url': new_url,
                 })
         return True
+
 
     def help(self):
         safe_print(stylize(__doc__), file=sys.stderr, end='')

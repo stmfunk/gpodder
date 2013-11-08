@@ -1,0 +1,14 @@
+char *s = N_("gPodder Podcast Editor");
+char *s = N_("Section:");
+char *s = N_("Disable feed updates (pause subscription)");
+char *s = N_("Synchronize to MP3 player devices");
+char *s = N_("Strategy:");
+char *s = N_("General");
+char *s = N_("<b>HTTP/FTP Authentication</b>");
+char *s = N_("Username:");
+char *s = N_("Password:");
+char *s = N_("<b>Locations</b>");
+char *s = N_("Download to:");
+char *s = N_("Website:");
+char *s = N_("website label");
+char *s = N_("Advanced");
